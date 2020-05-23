@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 import time
 import os
-import shutil
+import psutil
 import threading
 import math
 
@@ -27,9 +27,10 @@ def find_oldest_file(folder):
     return oldest_file
 
 def get_remaining_disk_space(self):
-
-    total, used, free = shutil.disk_usage(r'C:\Users\JavierP\Desktop\images')
-    return free//2**30
+    #'/media/pi/My Passport'
+    
+    total, used, free, percent = psutil.disk_usage(self)
+    return percent
 
 
 def write_frame(capture):
@@ -52,12 +53,22 @@ def write_frame(capture):
     folder_name= r'/media/pi/My Passport/rear_camera/'
     file_name =folder_name+'rear_camera_'+time.strftime("%b %d %Y %H:%M:%S", time.gmtime())+'.avi'
     output = cv2.VideoWriter(file_name, vid_cod, FPS, (fwidth,fheight))
-    
+    mem_threshold=95
+    hdd_folder = '/media/pi/My Passport/rear_camera'
+    folder = '/media/pi/My Passport/rear_camera'    
     num_frame = 0
     while True:
-        if len(np)>50:
+        if get_remaining_disk_space(hdd_folder)>mem_threshold:
+            oldest_file = find_oldest_file(folder)
+            if len(oldest_file)>0:
+                os.remove(oldest_file)
+
+        if len(np)>40:
             lo = len(np)
             print('length of np is...\n',len(np))
+
+
+
             for f in range(lo):
                 output.write(np[f])
 #                 print('type of np \n',type(np))
@@ -75,7 +86,7 @@ def write_frame(capture):
                 #print('Write frame f...%i.\n'%f)
 
 
-                if num_frame == 5000:
+                if num_frame == 4000:
                     print('Weeeeee 50 frames\n ')
                     output.release()
                     file_name =folder_name+'rear_camera_'+time.strftime("%b %d %Y %H:%M:%S", time.gmtime())+'.avi'
@@ -123,21 +134,21 @@ def grab_video(capture):
                 np.append(frame)
             else:
                 #print('Frame not captured!!!!\n')
-                capture = cv2.VideoCapture('rtsp://admin:CameraPassword@CameraIP/1')
+                capture = cv2.VideoCapture('rtsp://admin:CameraPass@CameraIP/1')
                 counter_recap = counter_recap + 1 
                 
         else:
             #print('Frame not captured!!!!\n')
-            capture = cv2.VideoCapture('rtsp://admin:CameraPassword@CameraIP/1')
+            capture = cv2.VideoCapture('rtsp://admin:CameraPass@CameraIP/1')
             counter_recap = counter_recap + 1 
         #print('number of frames retrieved....\n', counter)
 
 print(os.getcwd())
 
 
+##capture = cv2.VideoCapture('rtsp://username:password@192.168.1.64/1')
 
-
-attempts_limit = 10
+attempts_limit = 100
 current_attempts = 0
 
 while current_attempts <attempts_limit:
@@ -145,7 +156,7 @@ while current_attempts <attempts_limit:
         ##capture = cv2.VideoCapture('rtsp://username:password@192.168.1.64/1')
 
 
-        capture = cv2.VideoCapture('rtsp://admin:CameraPassword@CameraIP/1')
+        capture = cv2.VideoCapture('rtsp://admin:CameraPass@CameraIP/1')
         ret,frame = capture.read()
         if ret:
                 break
@@ -171,7 +182,7 @@ file_name =folder_name+'rear_camera_'+time.strftime("%b_%d_%Y_%H_%M_%S", time.gm
 
 original_time = time.time()
 
-#capture = cv2.VideoCapture('rtsp://admin:CameraPassword@CameraIP/1')
+#capture = cv2.VideoCapture('rtsp://admin:CameraPass@CameraIP/1')
 
 
 
